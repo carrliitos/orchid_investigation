@@ -125,6 +125,15 @@ This project seeks to address critical **disparities in organ procurement**, eva
 on organ viability**, and develop a **predictive model** to assist in decision-making. By leveraging the **ORCHID 
 dataset**, our findings will contribute to a more **equitable, efficient, and data-driven organ procurement system**.
 
+## 9. References
+
+- Adam, H., Suriyakumar, V., Pollard, T., Moody, B., Erickson, J., Segal, G., Adams, B., Brockmeier, D., Lee, K., 
+McBride, G., Ranum, K., Wadsworth, M., Whaley, J., Wilson, A., & Ghassemi, M. (2024). Organ Retrieval and Collection of 
+Health Information for Donation (ORCHID) (version 2.0.0). PhysioNet. https://doi.org/10.13026/w10c-6g08.
+- Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., ... & Stanley, H. E. (2000). PhysioBank, 
+PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 
+101 (23), pp. e215–e220.
+
 ## Execution
 To execute, run the below commands:
 
