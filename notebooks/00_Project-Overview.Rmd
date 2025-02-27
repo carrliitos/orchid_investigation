@@ -1,0 +1,85 @@
+---
+title: "Project Overview"
+author: "Benzon Carlitos Salazar (salazarbc24@uww.edu)"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+## 1. Project Topic
+
+My project will focus on organ procurement disparities, clinical predictors of organ viability, and regression models for 
+procurement success. I will analyze the **Organ Retrieval and Collection of Health Information for Donation (ORCHID) dataset**, 
+which is publicly available from PhysioNet and includes over **133,101 deceased donor referrals** across six 
+**Organ Procurement Organizations (OPOs)** in the U.S.
+
+## 2. Main Issues and Problems
+
+My project attempts to address three primary issues:
+
+1. **Disparities in Organ Procurement Outcomes** – Do race, socioeconomic status, and geography impact organ procurement rates? 
+2. **Influence of Clinical Variables on Procurement Success** – Which medical and laboratory parameters best predict procurement success?
+3. **Regression Modeling for Organ Procurement Success** – Can regression models accurately predict whether an organ will be successfully procured?
+
+These questions are crucial because organ transplantation relies on efficient allocation and procurement. Understanding 
+disparities and improving predictive capabilities can help optimize transplant decisions and promote equity in the system.
+
+## 3. Background Information Plan
+
+To contextualize the research, I will review:
+
+- **Existing literature on organ procurement disparities**, including racial and socioeconomic factors influencing donation rates.
+- **Clinical criteria for organ viability**, focusing on blood chemistry, hematology, and arterial blood gas levels.
+- **Current regression modeling approaches** in organ transplantation, particularly logistic regression and other statistical methods used in medical decision-making.
+- **Policies and regulations governing OPOs**, to understand organizational influences on procurement outcomes.
+
+Sources for my review will include academic journals, reports from the United Network for Organ Sharing (UNOS), and 
+relevant medicaldecision-making studies.
+
+## 4. Data Collection Process
+
+### Methods and Tools
+
+I will be relying on publicly available data from the **Organ Retrieval and Collection of Health Information for Donation (ORCHID) dataset**, 
+hosted on **PhysioNet**. The data collection process will involve the following steps:
+
+1. **Data Acquisition:**
+  - The dataset will be downloaded directly from PhysioNet using their web interface.
+  - If necessary, the PhysioNet API will be used for automated access.
+2. **Data Structure and Organization:**
+  - The dataset consists of multiple CSV files, including **demographic, clinical, and procedural data** related to organ procurement.
+  - The tables will be linked using the unique **PatientID** field.
+3. **Data Storage and Management:**
+  - The dataset will be stored in a **secure local repository** or **cloud storage** for easy access.
+  - R will be used for initial data exploration and preprocessing.
+4. **Data Cleaning and Preprocessing:**
+  - Handling missing values by applying imputation or exclusion methods where appropriate.
+  - Standardizing variable formats for consistency in analysis.
+  - Filtering data based on relevant **study criteria**, such as time period, OPOs, or specific donor characteristics.
+5. **Tools for Data Processing and Analysis:**
+  - **R (tidyverse, dplyr, ggplot2, caret, glmnet)** for data manipulation, visualization, and regression modeling.
+  - **R Markdown** for exploratory data analysis and documentation.
+
+## 5. Data and Variables
+
+The ORCHID dataset contains **demographic, clinical, and procedure information on deceased donor referrals**. Specifically, 
+the dataset includes:
+
+- **Demographic Data**: Race, age, sex, geographic region, socioeconomic proxies (hospital identifier, OPO region).
+- **Clinical Variables**: Blood chemistry, hematology, arterial blood gas levels, infection status, cause of death, comorbidities.
+- **Referral and Procurement Details**: Referral source, organ type, authorization status, OPO performance metrics.
+- **Outcome Variable**: Whether the organ was successfully procured.
+
+This dataset can be obtained from PhysioNet: https://physionet.org/content/orchid/2.0.0/
+
+## 6. Questions and Concerns
+
+### Questions
+
+1. What are the best statistical methods to adjust for confounding factors in organ procurement disparities?
+2. How can missing data in clinical variables be handled to improve regression model accuracy?
+3. What are the most effective regression techniques for predicting organ procurement success?
+
+### Concerns
+
+- **Class Imbalance**: Procurement success may be significantly rarer than failures, which could affect model validity.
+- **Data Bias**: Referral processes and OPO performance may introduce biases into the dataset.

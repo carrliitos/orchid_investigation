@@ -1,0 +1,273 @@
+---
+title: "Data Extraction and Clean up"
+author: "Benzon Carlitos Salazar (salazarbc24@uww.edu)"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+**All code chunks will not be evaluated since clean up was already performed prior to knitting this document.**
+
+## Summary of Data Cleanup Process
+
+The data cleanup involved reading raw CSV files from the ORCHID dataset, transforming them into a structured format, and 
+saving the cleaned data as Parquet files. The key steps included:
+
+### 1. Reading Raw Data:
+
+- CSV files for various event categories (e.g., ABG, CBC, Chemistry, Culture, Fluid Balance, Hemodynamics, etc.) were read into R.
+
+### 2. Data Cleaning and Transformation:
+
+- Unnecessary columns (`RowID`, unnamed columns) were dropped.
+- Data was grouped by event type (e.g., `abg_name`, `cbc_name`, `chem_name`) and converted to a wide format using `pivot_wider()`.
+- Numeric values were coerced into appropriate data types (`double`).
+- An `opo_group` identifier was extracted from `PatientID` to categorize patients.
+- `tidyr::fill()` was used to propagate missing values up and down within each group.
+- Data was grouped by `PatientID`, `time_event`, and other relevant identifiers, then deduplicated using `slice_head()`.
+
+### 3. Data Output & Cleanup:
+
+- The cleaned datasets were saved in Parquet format for efficient storage and processing.
+- Raw CSV files were removed after ensuring successful cleanup.
+- Memory was cleared using `rm(list = ls(all.names = TRUE))` and `gc()` to optimize performance.
+
+This process ensured that data was well-structured, deduplicated, and efficiently stored while maintaining data integrity.
+
+Below is an example of what the whole clean up process looked like.
+
+```{r setup, include=TRUE}
+library(magrittr)
+
+orchid_folder <- here::here("data-raw/physionet.org/files/orchid/2.0.0")
+```
+
+```{r data_cleaning__abg_events, eval=FALSE, include=TRUE}
+abg_events <- 
+  readr::read_csv(here::here(orchid_folder, "ABGEvents.csv"))
+
+abg_events_proc <-
+  abg_events %>%
+  dplyr::select(-c("...1", "RowID")) %>%
+  dplyr::group_by(abg_name) %>%
+  dplyr::mutate(row_id = dplyr::row_number()) %>%
+  tidyr::pivot_wider(names_from = abg_name, values_from = value) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-row_id) %>%
+  dplyr::mutate(opo_group = as.factor(substring(PatientID, 0, 4)),
+                abg_ventilator_mode = as.character(abg_ventilator_mode),
+                PH = as.double(PH),
+                PCO2 = as.double(PCO2),
+                PO2 = as.double(PO2),
+                HCO3 = as.double(HCO3),
+                BE = as.double(BE),
+                O2SAT = as.double(O2SAT),
+                FIO2 = as.double(FIO2),
+                Rate = as.double(Rate),
+                TV = as.double(TV),
+                PEEP = as.double(PEEP),
+                PIP = as.double(PIP))
+
+abg_events_final <-
+  abg_events_proc %>%
+  dplyr::group_by(PatientID, time_event, abg_ventilator_mode, opo_group) %>%
+  tidyr::fill(dplyr::everything(), .direction = "updown") %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup()
+
+abg_events_final %>% nanoparquet::write_parquet(here::here("data", "abg_events.parquet"))
+rm(abg_events, abg_events_proc, abg_events_final)
+```
+
+```{r data_cleaning__calc_deaths, eval=FALSE, include=FALSE}
+cal_deaths <- 
+  readr::read_csv(here::here(orchid_folder, "calc_deaths.csv"))
+
+cal_deaths %>% nanoparquet::write_parquet(here::here("data", "calc_deaths.parquet"))
+rm(cal_deaths)
+```
+
+```{r data_cleaning__cbc_events, eval=FALSE, include=FALSE}
+cbc_events <- 
+  readr::read_csv(here::here(orchid_folder, "CBCEvents.csv"))
+
+cbc_events_proc <-
+  cbc_events %>%
+  dplyr::select(-c("...1", "RowID")) %>%
+  dplyr::group_by(cbc_name) %>%
+  dplyr::mutate(row_id = dplyr::row_number()) %>%
+  tidyr::pivot_wider(names_from = cbc_name, values_from = value) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-row_id) %>%
+  dplyr::mutate(opo_group = as.factor(substring(PatientID, 0, 4)),
+                RBC = as.double(RBC),
+                WBC = as.double(WBC),
+                Hgb = as.double(Hgb),
+                Hct = as.double(Hct),
+                Ptl = as.double(Ptl),
+                Segs = as.double(Segs),
+                Lymp = as.double(Lymp),
+                Mono = as.double(Mono),
+                Eos = as.double(Eos))
+
+cbc_events_final <-
+  cbc_events_proc %>%
+  dplyr::group_by(PatientID, time_event, opo_group) %>%
+  tidyr::fill(dplyr::everything(), .direction = "updown") %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup()
+
+cbc_events_final %>% nanoparquet::write_parquet(here::here("data", "cbc_events.parquet"))
+rm(cbc_events, cbc_events_proc, cbc_events_final)
+```
+
+```{r data_cleaning__chem_events, eval=FALSE, include=FALSE}
+chem_events <- 
+  readr::read_csv(here::here(orchid_folder, "ChemistryEvents.csv"))
+
+chem_events_proc <-
+  chem_events %>%
+  dplyr::select(-c("...1", "RowID")) %>%
+  dplyr::group_by(chem_name) %>%
+  dplyr::mutate(row_id = dplyr::row_number()) %>%
+  tidyr::pivot_wider(names_from = chem_name, values_from = value) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(opo_group = as.factor(substring(PatientID, 0, 4))) %>%
+  dplyr::select(-row_id)
+
+chem_events_final <-
+  chem_events_proc %>%
+  dplyr::group_by(PatientID, time_event, opo_group) %>%
+  tidyr::fill(dplyr::everything(), .direction = "updown") %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup()
+
+chem_events_final %>% nanoparquet::write_parquet(here::here("data", "chem_events.parquet"))
+rm(chem_events, chem_events_proc, chem_events_final)
+```
+
+```{r data_cleaning__culture_events, eval=FALSE, include=FALSE}
+culture_events <-
+  readr::read_csv(here::here(orchid_folder, "CultureEvents.csv"))
+
+culture_events_proc <-
+  culture_events %>%
+  dplyr::select(-c("...1", "RowID")) %>%
+  dplyr::group_by(culture_source) %>%
+  dplyr::mutate(rowid = dplyr::row_number()) %>%
+  tidyr::pivot_wider(names_from = culture_source, values_from = result) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(opo_group = as.factor(substring(PatientID, 0, 4))) %>%
+  dplyr::select(-rowid)
+
+culture_events_final <-
+  culture_events_proc %>%
+  dplyr::group_by(PatientID, time_event, opo_group) %>%
+  tidyr::fill(dplyr::everything(), .direction = "updown") %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup()
+
+culture_events_final %>% nanoparquet::write_parquet(here::here("data", "culture_events.parquet"))
+rm(culture_events, culture_events_proc, culture_events_final)
+```
+
+```{r data_cleaning__fb_events, eval=FALSE, include=FALSE}
+fluid_balance_events <-
+  readr::read_csv(here::here(orchid_folder, "FluidBalanceEvents.csv"))
+
+fluid_balance_events_proc <-
+  fluid_balance_events %>%
+  tidyr::pivot_wider(names_from = fluid_name, values_from = amount) %>%
+  dplyr::mutate(opo_group = as.factor(substring(PatientID, 0, 4))) %>%
+  dplyr::select(-c("...1", "RowID"))
+
+fluid_balance_events_final <-
+  fluid_balance_events_proc %>%
+  dplyr::group_by(PatientID, time_event_start, time_event_end, opo_group, fluid_type) %>%
+  tidyr::fill(dplyr::everything(), .direction = "updown") %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup()
+
+fluid_balance_events_final %>% nanoparquet::write_parquet(here::here("data", "fluid_balance_events.parquet"))
+rm(fluid_balance_events, fluid_balance_events_proc, fluid_balance_events_final)
+```
+
+```{r data_cleaning__hemo_events, eval=FALSE, include=FALSE}
+hemo_events <-
+  readr::read_csv(here::here(orchid_folder, "HemoEvents.csv"))
+
+hemo_events_proc <-
+  hemo_events %>%
+  dplyr::mutate(measurement_name_type = paste0(measurement_type, measurement_name),
+                opo_group = as.factor(substring(PatientID, 0, 4))) %>%
+  tidyr::pivot_wider(names_from = measurement_name_type, values_from = value) %>%
+  dplyr::select(-c("...1", "RowID", "measurement_name", "measurement_type"))
+
+hemo_events_final <-
+  hemo_events_proc %>%
+  dplyr::group_by(PatientID, time_event_start, time_event_end, opo_group) %>%
+  tidyr::fill(dplyr::everything(), .direction = "updown") %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup()
+
+hemo_events_final %>% nanoparquet::write_parquet(here::here("data", "hemo_events.parquet"))
+rm(hemo_events, hemo_events_proc, hemo_events_final)
+```
+
+```{r data_cleaning__referrals, eval=FALSE, include=FALSE}
+referrals <-
+  readr::read_csv(here::here(orchid_folder, "referrals.csv"))
+
+referrals %>% nanoparquet::write_parquet(here::here("data", "referrals.parquet"))
+rm(referrals)
+```
+
+```{r data_cleaning__serology_events, eval=FALSE, include=FALSE}
+serology_events <-
+  readr::read_csv(here::here(orchid_folder, "SerologyEvents.csv"))
+
+serology_events_proc <-
+  serology_events %>%
+  dplyr::mutate(
+    serology_name = ifelse(is.na(serology_name_Other), serology_name, paste(serology_name, serology_name_Other, sep = "_")),
+    opo_group = as.factor(substring(PatientID, 0, 4)),
+    result = paste(result, "SEROLOGY", sep = "_")
+  ) %>%
+  tidyr::pivot_wider(names_from = result, values_from = serology_name) %>%
+  dplyr::select(-c("...1", "RowID", "serology_name_Other"))
+
+serology_events_final <-
+  serology_events_proc %>%
+  dplyr::group_by(PatientID, time_event, opo_group) %>%
+  tidyr::fill(dplyr::everything(), .direction = "updown") %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup()
+
+serology_events_final %>% nanoparquet::write_parquet(here::here("data", "serology_events.parquet"))
+rm(serology_events, serology_events_proc, serology_events_final)
+```
+
+```{r clean_up, include=TRUE}
+# List of files to remove
+files_to_remove <- c(
+  "ABGEvents.csv",
+  "calc_deaths.csv",
+  "CBCEvents.csv",
+  "ChemistryEvents.csv",
+  "CultureEvents.csv",
+  "FluidBalanceEvents.csv",
+  "HemoEvents.csv",
+  "referrals.csv",
+  "SerologyEvents.csv"
+)
+
+# Remove files only if they exist
+purrr::walk(files_to_remove, ~ {
+  file_path <- here::here(orchid_folder, .x)
+  if (file.exists(file_path)) {
+    file.remove(file_path)
+  }
+})
+
+rm(list = ls(all.names = TRUE)) # clear all objects including hidden objects
+invisible(gc()) # free up memory
+```

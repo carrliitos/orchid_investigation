@@ -1,0 +1,38 @@
+---
+title: "Investigating Disparities, Clinical Variables, and Predictive Modeling in Organ Procurement"
+author: "Benzon Carlitos Salazar"
+date: '`r strftime(Sys.time(), "%B %d, %Y")`'
+output: 
+  pdf_document:
+    df_print: kable
+  html_document:
+    code_folding: show
+    df_print: paged
+    toc: TRUE
+    toc_float: TRUE
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+options(knitr.kable.NA = "")
+options(knitr.duplicate.label = "allow")
+options(gt.html_tag_check = FALSE)
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+```{r, include=FALSE}
+files <- list.files(pattern = "\\d+.*\\Rmd", recursive = TRUE)
+chunks <- paste0('```{r child ="', files, '"}\n```\n')
+cat(chunks, sep = "\n")
+```
+
+# Project Overview
+
+```{r child ="00_Project-Overview.Rmd"}
+```
+
+# Data Extraction and Clean up
+
+```{r child ="01_Data-Extraction.Rmd"}
+```

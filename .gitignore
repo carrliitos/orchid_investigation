@@ -1,0 +1,37 @@
+################################################################################
+#                                                                              #
+# Project Defaults                                                             #
+#                                                                              #
+################################################################################
+# R defaults
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Ignore the contents of any data or output directory except for the .gitkeep
+# file to protect any PHI
+data*/*
+!data*/.gitkeep
+output/*
+!output/.gitkeep
+
+# Ignore any rendered RMarkdown file to protect any PHI
+notebooks/*.html
+reports/*.html
+*.nb.html
+
+# Ignore any RMarkdown cache file
+notebooks/*_cache
+reports/*_cache
+
+# Ignore the configuration file to protect any secrets
+config.yml
+
+R/keys.R
+
+################################################################################
+#                                                                              #
+# Project-specific Settings                                                    #
+#                                                                              #
+################################################################################
