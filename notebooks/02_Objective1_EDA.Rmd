@@ -36,7 +36,9 @@ socioeconomic proxies, and OPO region—and quantify the magnitude and significa
 
 ### Organ Procurement Outcomes by Demographic, Geographic, and Clinical Characteristics
 
-```{r descriptives, echo=FALSE}
+```{r table1, echo=FALSE}
+# obj1_abt %>% dplyr::group_by(Cause_of_Death_UNOS) %>% dplyr::summarise(counts = dplyr::n(), .groups = "keep") %>% dplyr::arrange(desc(counts))
+
 age_cats <-
   c("Less than 18 y.o.",
     "18-19 y.o.",
@@ -50,18 +52,32 @@ age_cats <-
 obj1_abt <-
   referrals_df %>%
   dplyr::filter(!is.na(Age) & !is.na(Gender)) %>%
-  dplyr::mutate(age_category = factor(
-    dplyr::case_when(
-      Age < 18 ~ age_cats[1],
-      dplyr::between(Age, 18, 19) ~ age_cats[2],
-      dplyr::between(Age, 20, 29) ~ age_cats[3],
-      dplyr::between(Age, 30, 39) ~ age_cats[4],
-      dplyr::between(Age, 40, 49) ~ age_cats[5],
-      dplyr::between(Age, 50, 59) ~ age_cats[6],
-      dplyr::between(Age, 60, 69) ~ age_cats[7],
-      Age >= 70 ~ age_cats[8],
-      TRUE ~ "Error"
-    ), levels = age_cats)) %>%
+  dplyr::mutate(
+    age_category = factor(
+      dplyr::case_when(
+        Age < 18 ~ age_cats[1],
+        dplyr::between(Age, 18, 19) ~ age_cats[2],
+        dplyr::between(Age, 20, 29) ~ age_cats[3],
+        dplyr::between(Age, 30, 39) ~ age_cats[4],
+        dplyr::between(Age, 40, 49) ~ age_cats[5],
+        dplyr::between(Age, 50, 59) ~ age_cats[6],
+        dplyr::between(Age, 60, 69) ~ age_cats[7],
+        Age >= 70 ~ age_cats[8],
+        TRUE ~ "Error"
+      ),
+      levels = age_cats
+    ),
+    Cause_of_Death_UNOS = ifelse(is.na(Cause_of_Death_UNOS), "Unknown Cause of Death", Cause_of_Death_UNOS),
+    Cause_of_Death_UNOS = ifelse(Cause_of_Death_UNOS %in% c("Anoxia", "Unknown Cause of Death", "Other", "CVA/Stroke", "Head Trauma"), Cause_of_Death_UNOS, "Other Cause of Death"),
+    Mechanism_of_Death = ifelse(is.na(Mechanism_of_Death), "Unknown Mechanism of Death", Mechanism_of_Death),
+    Mechanism_of_Death = ifelse(Mechanism_of_Death %in% c("Unknown Mechanism of Death", "Cardiovascular", "Natural Causes", "ICH/Stroke", "None of the Above", "Blunt Injury"), Mechanism_of_Death, "Other Mechanism of Death"),
+    Circumstances_of_Death = dplyr::case_when(
+      is.na(Circumstances_of_Death) ~ "Unknown Circumstances of Death",
+      Circumstances_of_Death %in% c("Natural Causes", "Death from Natural Causes") ~ "Death from Natural Causes",
+      Circumstances_of_Death %in% c("MVA", "Motor Vehicle Accident") ~ "Motor Vehicle Accident",
+      TRUE ~ "Other Circumstances of Death"
+    )
+  ) %>%
   dplyr::select(
     procured,
     Age,
@@ -147,7 +163,7 @@ obj1_abt_full %>%
   kableExtra::column_spec(1, width = "12.5em")
 ```
 
-Table \@ref(tab:descriptives) summarizes the baseline characteristics of the study cohort (N = 132,968), stratified by 
+Table \@ref(tab:table1) summarizes the baseline characteristics of the study cohort (N = 132,968), stratified by 
 whether an organ was successfully procured. Among all decedents, 9,502 (7.1%) had at least one organ procured, while 
 123,466 (92.9%) did not.
 
@@ -177,30 +193,31 @@ in OPOs 2, 3, and 6 may reflect logistical challenges, under-referral, or system
 disparities underscore the need for standardized performance evaluation and the potential for best-practice dissemination 
 from higher-performing OPOs.
 
-**UNOS-defined cause of death** was available for 103,207 decedents. Head trauma and cerebrovascular/stroke-related 
-deaths had the highest procurement rates (24% and 26%, respectively), likely reflecting favorable clinical conditions 
-for donation. The most common cause of death—anoxia—had a moderate procurement rate of 9.6%. In contrast, terminal or 
-infectious conditions such as cancer, COPD, HIV, sepsis, and viral disease were associated with near-zero procurement, 
-consistent with contraindications for donation. Notably, no organs were procured from the 29,761 decedents with unknown 
-cause of death, suggesting documentation-related loss of donor opportunities.
+**UNOS-defined cause of death** was reported for all decedents. The most common causes were **anoxia** (30%) and 
+**unknown cause of death** (22%). **Head trauma** had one of the highest procurement rates at **24%**, followed by 
+**CVA/stroke** at **13%**, suggesting these conditions often preserve organ viability. In contrast, **other** and 
+**unknown** causes of death had substantially lower procurement rates, **1.0%** and **0%**, respectively. The complete 
+lack of procurement among decedents with an unknown cause of death highlights the potential impact of documentation gaps 
+on organ recovery. Collectively, these patterns underscore the importance of both clinical suitability and accurate case 
+classification in maximizing donation opportunities.
 
-**UNOS-defined mechanism of death** showed similar trends. Among the 98,468 patients with available data, traumatic 
-causes—such as gunshot wounds (32–49%), asphyxiation (30%), and drug intoxication (24–52%)—were associated with the 
-highest procurement rates. Other external causes like blunt trauma, drowning, and electrocution also had elevated rates. 
-In contrast, natural causes, including cardiovascular and unspecified natural deaths, had rates below 6%. These findings 
-reinforce the observation that donation is more likely in settings of sudden trauma, where organ viability can be 
-maintained. The complete absence of procurement in the 34,500 cases with missing mechanism data again raises concern 
-about under-documented opportunities.
+**UNOS-defined mechanism of death** was available for all decedents. The most frequent mechanisms were **unknown** (26%), 
+**cardiovascular** (21%), and **natural causes** (19%). Procurement rates were highest among decedents with 
+**other mechanisms of death** (27%) and **blunt injury** (22%), both of which are consistent with external trauma and 
+greater clinical suitability for organ donation. In contrast, **natural causes** and **cardiovascular deaths** were 
+associated with low procurement rates, **1.2%** and **6.1%**, respectively—likely reflecting comorbidities or rapid 
+physiological deterioration. Notably, **no organs were procured** from the 34,500 patients (26%) with an 
+**unknown mechanism of death**, underscoring how incomplete documentation may contribute to missed donation opportunities.
 
-**UNOS-defined circumstances of death** further highlight these patterns. Among decedents with known data (N = 98,524), 
-natural causes accounted for the majority (62%) but had the lowest procurement rate (4.9%). Conversely, deaths from 
-external circumstances such as suicide (32%), homicide (27%), and non-motor vehicle accidents (54%) showed substantially 
-higher procurement rates. Rare categories such as alleged suicide and alleged child abuse—though small in number—had 
-procurement rates exceeding 50%, likely due to younger age and minimal comorbidities. The 34,444 decedents with missing 
-data again had no recorded procurement, highlighting the need for consistent classification of death circumstances to
- optimize donor recognition.
+**UNOS-defined circumstances of death** further highlight these patterns. **Death from natural causes** was the most 
+common circumstance (48%) but had a relatively low procurement rate of **5.8%**. In contrast, **motor vehicle accidents**, 
+while accounting for only 4.1% of the cohort, were associated with a substantially higher procurement rate of **25%**, 
+indicating the clinical viability of donors who experience sudden traumatic deaths. **Other circumstances of death**, a 
+heterogeneous category comprising 22% of cases, had a procurement rate of **15%**, suggesting mixed donor suitability. 
+As with other variables, **no procurement occurred among the 34,444 patients (26%) with unknown circumstances of death**, 
+emphasizing the critical need for complete and accurate documentation to improve identification of potential donors.
 
-```{r gg-procured-by-obj1, fig.cap = "Proportion of organ procurement by Race, Gender, Age Category, and OPO. Bars show within-group percentages; procurement is more common among younger, male, Hispanic, and OPO5 patients."}
+```{r gg-procured-by-obj1, fig.cap = "Proportion of organ procurement by Race, Gender, Age Category, and OPO. Bars show within-group percentages; procurement is more common among younger, male, Hispanic, and OPO5 patients.", echo=FALSE}
 p_gender <-
   ggplot2::ggplot(obj1_abt, ggplot2::aes(x = Gender, fill = procured)) +
   ggplot2::geom_bar(position = "fill") +
@@ -211,6 +228,7 @@ p_gender <-
     labels = c("No", "Yes")
   ) +
   ggplot2::labs(title = "By Gender", y = "Percent", x = NULL) +
+  ggplot2::coord_flip() +
   ggplot2::theme_minimal()
 
 p_race <-
@@ -249,6 +267,7 @@ p_opo <-
     labels = c("No", "Yes")
   ) +
   ggplot2::labs(title = "By OPO", y = "Percent", x = NULL) +
+  ggplot2::coord_flip() +
   ggplot2::theme_minimal()
 
 library(patchwork)
@@ -329,10 +348,7 @@ motivating further multivariable modeling to quantify these differences while ad
 ### Logistic Regression
 
 ```{r log_regression_obj1}
-log_reg_model <-
-  stats::glm(procured ~ Race + Gender + OPO, data = obj1_abt, family = binomial)
-
-summary(log_reg_model)
+log_reg_model <- stats::glm(procured ~ Race + Gender + OPO, data = obj1_abt, family = binomial)
 ```
 
 ```{r or_obj1, echo=FALSE}
@@ -340,7 +356,27 @@ log_reg_results <- broom::tidy(log_reg_model, exponentiate = TRUE, conf.int = TR
 log_reg_results %>% knitr::kable()
 ```
 
-```{r ors_from_log_reg_model, fig.cap = "Odds Ratios from Logistic Regression Model"}
+After controlling for all covariates in the model:
+
+* **Race**: Compared to Black patients (reference group), Hispanic patients had **higher odds** of organ procurement 
+(OR is approx. 1.35), while patients categorized as Other/Unknown had **lower odds** (OR is approx. 0.87). White/Caucasian 
+patients also had significantly higher odds (OR is approx. 1.17), suggesting potential racial disparities in procurement 
+outcomes even after adjustment.
+* **Gender**: Male patients had **higher odds** of procurement compared to females (OR is approx. 1.12), consistent with 
+patterns observed in the unadjusted analysis.
+* **OPO Region**: Substantial geographic variation was observed. Compared to OPO1 (reference), patients in OPO5 had the 
+**highest odds** of procurement (OR is approx. 1.27), while those in OPO2, OPO3, and OPO6 had **significantly lower odds** 
+(ORs ranging from 0.62 to 0.67). These differences may reflect regional variation in practices, infrastructure, or consent 
+processes.
+
+All associations were statistically significant (p < 0.05), and none of the confidence intervals included the null value 
+(OR = 1.0). This indicates meaningful adjusted differences in organ procurement across race, gender, and OPO.
+
+Specifically, Hispanic patients, White patients, male patients, and those in OPO5 had significantly higher odds of organ 
+procurement compared to their respective reference groups. In contrast, patients in OPOs 2, 3, 4, and 6 had significantly 
+lower odds.
+
+```{r ors-from-log-reg-model, fig.cap = "Odds Ratios from Logistic Regression Model", echo=FALSE}
 log_reg_results %>%
   dplyr::filter(term != "(Intercept)") %>%
   dplyr::mutate(
@@ -365,33 +401,11 @@ log_reg_results %>%
   ggplot2::theme_minimal(base_size = 12)
 ```
 
-The figure (\@ref(fig:ors_from_log_reg_model)) displays the adjusted odds ratios (ORs) and 95% confidence intervals from 
-the logistic regression model evaluating associations between demographic/geographic characteristics and the likelihood of organ procurement.
-
-After controlling for all covariates in the model:
-
-* **Race**: Compared to Black patients (reference group), Hispanic patients had **higher odds** of organ procurement 
-(OR is approx. 1.35), while patients categorized as Other/Unknown had **lower odds** (OR is approx. 0.87). White/Caucasian 
-patients also had significantly higher odds (OR is approx. 1.17), suggesting potential racial disparities in procurement 
-outcomes even after adjustment.
-* **Gender**: Male patients had **higher odds** of procurement compared to females (OR is approx. 1.12), consistent with 
-patterns observed in the unadjusted analysis.
-* **OPO Region**: Substantial geographic variation was observed. Compared to OPO1 (reference), patients in OPO5 had the 
-**highest odds** of procurement (OR is approx. 1.27), while those in OPO2, OPO3, and OPO6 had **significantly lower odds** 
-(ORs ranging from 0.62 to 0.67). These differences may reflect regional variation in practices, infrastructure, or consent processes.
-
-All associations were statistically significant (p < 0.05), and none of the confidence intervals included the null value 
-(OR = 1.0). This indicates meaningful adjusted differences in organ procurement across race, gender, and OPO.
-
-Specifically, Hispanic patients, White patients, male patients, and those in OPO5 had significantly higher odds of organ 
-procurement compared to their respective reference groups. In contrast, patients in OPOs 2, 3, 4, and 6 had significantly 
-lower odds.
+Figure \@ref(fig:ors-from-log-reg-model) displays the adjusted odds ratios (ORs) and 95% confidence intervals from 
+the logistic regression model evaluating associations between demographic/geographic characteristics and the likelihood 
+of organ procurement.
 
 ```{r clean_up, include=FALSE}
-obj1_abt_full %>%
-  as.data.frame() %>%
-  xlsx::write.xlsx(here::here("data", "Objective-1.xlsx"))
-
 rm(list = ls(all.names = TRUE)) # clear all objects including hidden objects
 invisible(gc()) # free up memory
 ```

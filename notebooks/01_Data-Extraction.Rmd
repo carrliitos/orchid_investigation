@@ -8,11 +8,11 @@ output: pdf_document
 The data cleanup involved reading raw CSV files from the ORCHID dataset, transforming them into a structured format, and 
 saving the cleaned data as Parquet files. The key steps included:
 
-### 1. Reading Raw Data:
+### Reading Raw Data:
 
 - CSV files for various event categories (e.g., ABG, CBC, Chemistry, Culture, Fluid Balance, Hemodynamics, etc.) were read into R.
 
-### 2. Data Cleaning and Transformation:
+### Data Cleaning and Transformation:
 
 - Unnecessary columns (`RowID`, unnamed columns) were dropped.
 - Data was grouped by event type (e.g., `abg_name`, `cbc_name`, `chem_name`) and converted to a wide format using `pivot_wider()`.
@@ -21,7 +21,7 @@ saving the cleaned data as Parquet files. The key steps included:
 - `tidyr::fill()` was used to propagate missing values up and down within each group.
 - Data was grouped by `PatientID`, `time_event`, and other relevant identifiers, then deduplicated using `slice_head()`.
 
-### 3. Data Output & Cleanup:
+### Data Output & Cleanup:
 
 - The cleaned datasets were saved in Parquet format for efficient storage and processing.
 - Raw CSV files were removed after ensuring successful cleanup.
@@ -29,7 +29,7 @@ saving the cleaned data as Parquet files. The key steps included:
 
 This process ensured that data was well-structured, deduplicated, and efficiently stored while maintaining data integrity.
 
-Below is an example of what the whole clean up process looked like.
+**Below is an example of what the whole clean up process looked like.**
 
 ```{r setup}
 library(magrittr)
@@ -284,7 +284,7 @@ proceed without further data wrangling.
 
 ## Overview of Files Processed
 
-| Raw File Name             | Description                          | Output Filename                  |
+| Raw File Name             | Description                          | Output Filename                 |
 |--------------------------|--------------------------------------|----------------------------------|
 | `ABGEvents.csv`          | Arterial blood gas measurements      | `abg_events.parquet`             |
 | `CBCEvents.csv`          | Complete blood count lab events      | `cbc_events.parquet`             |

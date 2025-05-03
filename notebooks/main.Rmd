@@ -62,8 +62,3 @@ concerns about fairness and resource allocation.
 \listoftables
 \listoffigures
 \newpage
-```{r tables, echo=FALSE}
-readRDS(here::here("data/tables", "Objective1.rds"))
-
-knitr::include_graphics(here::here("data/tables", "procured_by_obj1.png"))
-```
