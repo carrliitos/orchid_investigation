@@ -4,17 +4,14 @@
 ## 1. Introduction and Background
 
 Organ transplantation is a life-saving procedure that relies on the efficient procurement and allocation of donated 
-organs. However, disparities in organ procurement outcomes, the influence of clinical variables, and the ability to 
-predict procurement success remain critical challenges in the field. Despite extensive research on organ allocation, 
-there is a limited understanding of how systemic factors such as **race, geography, clinical parameters, and 
-organizational efficiency** impact procurement outcomes.  
+organs. However, disparities in organ procurement outcomes, and the influence of clinical variables. Despite extensive 
+research on organ allocation, there is a limited understanding of how systemic factors such as **race, geography, 
+clinical parameters, and organizational efficiency** impact procurement outcomes.  
 
 This project seeks to explore three major research questions:  
 1. **Disparities in Organ Procurement Outcomes** – Do race, socioeconomic status, and geography impact organ procurement rates?  
 2. **Influence of Clinical Variables on Procurement Success** – Which medical and laboratory parameters are most 
 predictive of procurement success?  
-3. **Predictive Modeling for Organ Procurement Success** – Can machine learning models predict whether an organ will be 
-successfully procured?  
 
 The project will leverage the **Organ Retrieval and Collection of Health Information for Donation (ORCHID) dataset**, a 
 unique multi-center dataset covering over **133,101 deceased donor referrals** across six **Organ Procurement 
@@ -37,11 +34,6 @@ The specific objectives are:
 - Analyze the impact of **laboratory markers (chemistry, hematology, arterial blood gas tests)** on procurement success.  
 - Determine which clinical variables serve as the **best predictors** for organ viability.  
 - Explore potential **thresholds for medical suitability** based on procurement outcomes.  
-
-### **Objective 3: Building a Predictive Model for Organ Procurement Success**
-- Develop **machine learning models** to predict procurement success based on **demographics, clinical status, and referral process characteristics**.  
-- Compare traditional statistical models (logistic regression) with **advanced models** (random forest, XGBoost, deep learning).  
-- Generate an **interpretable decision-support tool** for OPOs.  
 
 ## 3. Research Questions and Core Issues
 
