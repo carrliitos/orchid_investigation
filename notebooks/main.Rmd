@@ -3,6 +3,9 @@ title: "Investigating Disparities, Clinical Variables, and Predictive Modeling i
 author: "Benzon Carlitos Salazar"
 date: '`r strftime(Sys.time(), "%B %d, %Y")`'
 output: 
+  bookdown::pdf_document2:
+    number_sections: true
+    fig_caption: true
   pdf_document:
     df_print: kable
   html_document:
@@ -12,6 +15,10 @@ output:
     toc_float: TRUE
     theme: cosmo
 ---
+
+\newpage
+\tableofcontents
+\newpage
 
 ```{r setup, include=FALSE}
 options(knitr.kable.NA = "")
@@ -27,12 +34,36 @@ chunks <- paste0('```{r child ="', files, '"}\n```\n')
 cat(chunks, sep = "\n")
 ```
 
-# Project Overview
+# Introduction
+
+Organ transplantation is a critical component of modern healthcare, offering life-saving interventions for patients with 
+end-stage organ failure. However, the process of organ procurement, where we have donor referral to successful retrieval, 
+is influenced by a complex interplay of medical, logistical, and systemic factors. Despite ongoing efforts to improve 
+equity and efficiency in organ donation, disparities persist across racial, socioeconomic, and geographic lines, raising 
+concerns about fairness and resource allocation.
 
 ```{r child ="00_Project-Overview.Rmd"}
 ```
 
 # Data Extraction and Clean up
 
+**All code chunks will not be evaluated since clean up was already performed prior to knitting this document.**
+
 ```{r child ="01_Data-Extraction.Rmd"}
+```
+
+# Analysis
+
+```{r child ="02_Objective1_EDA.Rmd"}
+```
+
+\newpage
+# Appendix
+\listoftables
+\listoffigures
+\newpage
+```{r tables, echo=FALSE}
+readRDS(here::here("data/tables", "Objective1.rds"))
+
+knitr::include_graphics(here::here("data/tables", "procured_by_obj1.png"))
 ```

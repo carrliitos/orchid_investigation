@@ -1,0 +1,104 @@
+Absolutely. Here's a structured **analysis plan** for **Objective #1: Disparities in Organ Procurement Outcomes**:
+
+---
+
+### **Objective 1: Analyze Disparities in Organ Procurement Outcomes**
+
+#### 🔍 **Goal**
+
+### **1. Define the Outcome and Exposure Variables**
+
+* **Outcome Variable**
+
+  * `organ_procured` (binary): 1 if organ was successfully procured, 0 otherwise.
+  * Optional: stratify by organ type (e.g., kidney, liver).
+
+* **Primary Exposure Variables**
+
+  * **Race/Ethnicity** (e.g., White, Black, Hispanic, Other)
+  * **Socioeconomic Proxy**: Hospital or referral region as a proxy; if available, use donor zip code linked to area deprivation index.
+  * **Geography**: OPO region or donor state.
+
+* **Covariates (for adjustment)**
+
+  * Age
+  * Sex
+  * Cause of death
+  * Time from referral to declaration
+  * Clinical indicators (to control for potential confounding)
+
+---
+
+### **2. Descriptive Statistics**
+
+* Tabulate procurement success rates by:
+  * Race/ethnicity
+  * OPO region
+  * Socioeconomic proxy
+* Use bar charts or mosaic plots to visualize differences.
+* Calculate unadjusted procurement rates (%) and 95% confidence intervals per group.
+
+---
+
+### **3. Unadjusted Analysis**
+
+* **Chi-squared tests** or **Fisher’s exact tests** to test associations between procurement success and:
+
+  * Race/ethnicity
+  * OPO region
+  * Socioeconomic proxy
+
+* **Risk Ratios (RR)** or **Odds Ratios (OR)** from 2x2 tables comparing procurement rates by group.
+
+---
+
+### **4. Adjusted Analysis**
+
+* Fit a **multivariable logistic regression model**:
+
+```r
+glm(organ_procured ~ race + sex + age + region + socioeconomic_proxy + cause_of_death + key_clinical_vars, 
+    data = orchid_data, family = "binomial")
+```
+
+* Report:
+
+  * Adjusted odds ratios (aOR) for race, region, and SES
+  * 95% confidence intervals
+  * p-values
+
+* Use **marginal effects** or **predicted probabilities** to better interpret findings for policy discussions.
+
+---
+
+### **5. Sensitivity Analyses**
+
+* Repeat analysis:
+
+  * Stratified by organ type (e.g., kidney only).
+  * Excluding patients with missing key clinical predictors.
+  * Using alternate SES proxies if available (e.g., donor hospital rural/urban indicator).
+
+---
+
+### **6. Equity Gap Quantification (Optional)**
+
+* Compute **absolute risk differences** (ARD) between highest and lowest groups.
+* Use **Fairness metrics** (e.g., demographic parity ratio) if interested in ML framing.
+
+---
+
+### **7. Output and Reporting**
+
+* Create tables for:
+
+  * Descriptive statistics
+  * Logistic regression output
+* Create figures:
+
+  * Forest plots of aORs
+  * Choropleth maps of OPO-level procurement rates (if geocoded)
+
+---
+
+Let me know if you'd like R code scaffolding for any of these steps or want similar plans for Objectives 2 or 3.

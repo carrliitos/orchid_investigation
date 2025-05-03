@@ -5,10 +5,6 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-**All code chunks will not be evaluated since clean up was already performed prior to knitting this document.**
-
-## Summary of Data Cleanup Process
-
 The data cleanup involved reading raw CSV files from the ORCHID dataset, transforming them into a structured format, and 
 saving the cleaned data as Parquet files. The key steps included:
 
@@ -35,7 +31,7 @@ This process ensured that data was well-structured, deduplicated, and efficientl
 
 Below is an example of what the whole clean up process looked like.
 
-```{r setup, include=TRUE}
+```{r setup}
 library(magrittr)
 
 orchid_folder <- here::here("data-raw/physionet.org/files/orchid/2.0.0")
@@ -246,7 +242,7 @@ serology_events_final %>% nanoparquet::write_parquet(here::here("data", "serolog
 rm(serology_events, serology_events_proc, serology_events_final)
 ```
 
-```{r clean_up, include=TRUE}
+```{r clean_up}
 # List of files to remove
 files_to_remove <- c(
   "ABGEvents.csv",
@@ -271,3 +267,47 @@ purrr::walk(files_to_remove, ~ {
 rm(list = ls(all.names = TRUE)) # clear all objects including hidden objects
 invisible(gc()) # free up memory
 ```
+
+## Purpose of Data Cleanup
+
+The raw ORCHID dataset contains a wide variety of clinical event data stored across multiple CSV files. These files are 
+structured in a long format with multiple redundant columns, inconsistent naming conventions, and varying data types. 
+The primary objective of the cleanup was to create tidy, analysis-ready data by:
+
+- Converting event-level long-form data into patient-level wide format.
+- Ensuring consistency across numeric, categorical, and time-based variables.
+- Removing duplicate rows, irrelevant columns, and noise.
+- Storing processed outputs in a space-efficient, analysis-friendly format (`.parquet`).
+
+This enables downstream applications such as predictive modeling, visualization, and exploratory data analysis to 
+proceed without further data wrangling.
+
+## Overview of Files Processed
+
+| Raw File Name             | Description                          | Output Filename                  |
+|--------------------------|--------------------------------------|----------------------------------|
+| `ABGEvents.csv`          | Arterial blood gas measurements      | `abg_events.parquet`             |
+| `CBCEvents.csv`          | Complete blood count lab events      | `cbc_events.parquet`             |
+| `ChemistryEvents.csv`    | Chemistry lab test results           | `chem_events.parquet`            |
+| `CultureEvents.csv`      | Microbial culture results            | `culture_events.parquet`         |
+| `FluidBalanceEvents.csv` | Fluid input/output documentation     | `fluid_balance_events.parquet`   |
+| `HemoEvents.csv`         | Hemodynamic monitoring values        | `hemo_events.parquet`            |
+| `SerologyEvents.csv`     | Serological test outcomes            | `serology_events.parquet`        |
+| `calc_deaths.csv`        | Calculated patient mortality data    | `calc_deaths.parquet`            |
+| `referrals.csv`          | Referral information (specialty etc.)| `referrals.parquet`              |
+
+## Notes on Data Quality and Consistency
+
+- **Column Removal**: Columns such as `RowID` and unnamed index columns (e.g., `...1`) were dropped to reduce noise.
+- **Wide Format Transformation**: Measurements grouped by name (e.g., `abg_name`, `cbc_name`) were converted into wide 
+format using `pivot_wider()` for one-row-per-timepoint structure.
+- **Type Coercion**: Key clinical variables were cast into `double` to ensure numeric operations are consistent.
+- **Group-level Missingness Imputation**: `tidyr::fill()` was used within each group (e.g., per `PatientID`) to forward- and backward-fill missing values where reasonable.
+- **Deduplication Strategy**: Within each patient-time-event grouping, only the first row was retained using `slice_head()`, assuming earlier rows are most relevant.
+- **Group Identifier**: An `opo_group` variable was extracted using the first four characters of `PatientID` to allow stratified subgroup analyses.
+
+## Folder Structure and Output Format
+
+- Raw data is located in: `data-raw/physionet.org/files/orchid/2.0.0/`
+- Cleaned files are saved to: `data/`
+- All output files are written in **Parquet** format using the `nanoparquet::write_parquet()` function for fast I/O and minimal disk usage.

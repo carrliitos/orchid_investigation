@@ -5,37 +5,23 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-## 1. Project Topic
+This project focuses on three interrelated themes in organ transplantation: disparities in organ procurement, clinical 
+predictors of organ viability, and predictive modeling of procurement success. The analysis will draw on the 
+**Organ Retrieval and Collection of Health Information for Donation (ORCHID) dataset**, a publicly available resource 
+from PhysioNet comprising over **133,101 deceased donor referrals** across six **Organ Procurement Organizations (OPOs)** 
+in the United States.
 
-My project will focus on organ procurement disparities, clinical predictors of organ viability, and regression models for 
-procurement success. I will analyze the **Organ Retrieval and Collection of Health Information for Donation (ORCHID) dataset**, 
-which is publicly available from PhysioNet and includes over **133,101 deceased donor referrals** across six 
-**Organ Procurement Organizations (OPOs)** in the U.S.
+Specifically, the project will address the following questions:
 
-## 2. Main Issues and Problems
+1. **Disparities in Organ Procurement Outcomes** – To what extent do race, socioeconomic status, and geography influence procurement rates?  
+2. **Clinical Predictors of Procurement Success** – Which medical and laboratory parameters are most strongly associated with successful organ procurement?  
+3. **Predictive Modeling for Procurement Success** – Can statistical regression models be developed to accurately predict whether an organ will be successfully procured?
 
-My project attempts to address three primary issues:
+These questions are critical to improving the equity and efficiency of the organ transplantation system. By identifying 
+disparities and enhancing predictive capabilities, this work aims to support more informed and equitable decision-making 
+in organ allocation.
 
-1. **Disparities in Organ Procurement Outcomes** – Do race, socioeconomic status, and geography impact organ procurement rates? 
-2. **Influence of Clinical Variables on Procurement Success** – Which medical and laboratory parameters best predict procurement success?
-3. **Regression Modeling for Organ Procurement Success** – Can regression models accurately predict whether an organ will be successfully procured?
-
-These questions are crucial because organ transplantation relies on efficient allocation and procurement. Understanding 
-disparities and improving predictive capabilities can help optimize transplant decisions and promote equity in the system.
-
-## 3. Background Information Plan
-
-To contextualize the research, I will review:
-
-- **Existing literature on organ procurement disparities**, including racial and socioeconomic factors influencing donation rates.
-- **Clinical criteria for organ viability**, focusing on blood chemistry, hematology, and arterial blood gas levels.
-- **Current regression modeling approaches** in organ transplantation, particularly logistic regression and other statistical methods used in medical decision-making.
-- **Policies and regulations governing OPOs**, to understand organizational influences on procurement outcomes.
-
-Sources for my review will include academic journals, reports from the United Network for Organ Sharing (UNOS), and 
-relevant medicaldecision-making studies.
-
-## 4. Data Collection Process
+## Data Collection Process
 
 ### Methods and Tools
 
@@ -59,7 +45,7 @@ hosted on **PhysioNet**. The data collection process will involve the following 
   - **R (tidyverse, dplyr, ggplot2, caret, glmnet)** for data manipulation, visualization, and regression modeling.
   - **R Markdown** for exploratory data analysis and documentation.
 
-## 5. Data and Variables
+## Data and Variables
 
 The ORCHID dataset contains **demographic, clinical, and procedure information on deceased donor referrals**. Specifically, 
 the dataset includes:
@@ -71,7 +57,7 @@ the dataset includes:
 
 This dataset can be obtained from PhysioNet: https://physionet.org/content/orchid/2.0.0/
 
-## 6. Questions and Concerns
+## Questions and Concerns
 
 ### Questions
 

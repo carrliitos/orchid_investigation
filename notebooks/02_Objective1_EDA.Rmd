@@ -1,0 +1,397 @@
+---
+title: 'Objective 1: EDA'
+author: "Benzon Carlitos Salazar (salazarbc24@uww.edu)"
+date: "`r Sys.Date()`"
+output:
+  bookdown::pdf_document2:
+    number_sections: true
+    fig_caption: true
+---
+
+```{r setup, include=FALSE}
+library(magrittr)
+
+referrals_df <- nanoparquet::read_parquet(here::here("data", "referrals.parquet"))
+```
+
+## Objective 1: Analyze Disparities in Organ Procurement Outcomes
+
+#### Goal
+
+To assess whether organ procurement rates differ across demographic and geographic groups—particularly by race/ethnicity, 
+socioeconomic proxies, and OPO region—and quantify the magnitude and significance of these disparities.
+
+* **Outcome Variable**
+  * `organ_procured` (binary): 1 if organ was successfully procured, 0 otherwise.
+* **Primary Exposure Variables**
+  * **Age**
+  * **Gender**
+  * **Race**
+  * **Organ Procurement Organizations (OPOs)**
+* **Covariates (for adjustment)**
+  * UNOS defined cause of death
+  * UNOS defined mechanism of death
+  * UNOS defined circumstances of death
+  * Time of referral from hospital
+
+### Organ Procurement Outcomes by Demographic, Geographic, and Clinical Characteristics
+
+```{r descriptives, echo=FALSE}
+age_cats <-
+  c("Less than 18 y.o.",
+    "18-19 y.o.",
+    "20-29 y.o.",
+    "30-39 y.o.",
+    "40-49 y.o.",
+    "50-59 y.o.",
+    "60-69 y.o.",
+    "70+ y.o.")
+
+obj1_abt <-
+  referrals_df %>%
+  dplyr::filter(!is.na(Age) & !is.na(Gender)) %>%
+  dplyr::mutate(age_category = factor(
+    dplyr::case_when(
+      Age < 18 ~ age_cats[1],
+      dplyr::between(Age, 18, 19) ~ age_cats[2],
+      dplyr::between(Age, 20, 29) ~ age_cats[3],
+      dplyr::between(Age, 30, 39) ~ age_cats[4],
+      dplyr::between(Age, 40, 49) ~ age_cats[5],
+      dplyr::between(Age, 50, 59) ~ age_cats[6],
+      dplyr::between(Age, 60, 69) ~ age_cats[7],
+      Age >= 70 ~ age_cats[8],
+      TRUE ~ "Error"
+    ), levels = age_cats)) %>%
+  dplyr::select(
+    procured,
+    Age,
+    age_category,
+    Gender,
+    Race,
+    OPO,
+    Cause_of_Death_UNOS,
+    Mechanism_of_Death,
+    Circumstances_of_Death,
+    time_referred
+  )
+
+obj1_abt_row <-
+  obj1_abt %>%
+  dplyr::select(-time_referred) %>%
+  gtsummary::tbl_summary(
+    by = procured,
+    percent = "row",
+    statistic = list(
+      Age ~ "{mean} ({p25}, {p75})",
+      gtsummary::all_categorical() ~ "{n}/{N} ({p}%)"
+    ),
+    sort = list(-age_category ~ "frequency"),
+    label = list(
+      Age ~ "Mean Patient Age (IQR)",
+      age_category ~ "Age Category - no. (%)",
+      Gender ~ "Gender - no. (%)",
+      Race ~ "Race - no. (%)",
+      OPO ~ "Organ Procurement Organization - no. (%)",
+      Cause_of_Death_UNOS ~ "UNOS defined cause of death - no. (%)",
+      Mechanism_of_Death ~ "UNOS defined mechanism of death - no. (%)",
+      Circumstances_of_Death ~ "UNOS defined circumstances of death - no. (%)"
+    )
+  ) %>%
+  gtsummary::modify_header(label = "**Variable**",
+                           stat_1 = "**Not Procured**\n(N = {n})",
+                           stat_2 = "**Procured**\n(N = {n})") %>%
+  gtsummary::bold_labels() %>%
+  gtsummary::modify_footnote(update = dplyr::everything() ~ NA)
+
+obj1_abt_col <-
+  obj1_abt %>%
+  dplyr::select(-c(time_referred, procured)) %>%
+  gtsummary::tbl_summary(
+    statistic = list(
+      Age ~ "{mean} ({p25}, {p75})",
+      gtsummary::all_categorical() ~ "{n}/{N} ({p}%)"
+    ),
+    sort = list(-age_category ~ "frequency"),
+    label = list(
+      Age ~ "Mean Patient Age (IQR)",
+      age_category ~ "Age Category - no. (%)",
+      Gender ~ "Gender - no. (%)",
+      Race ~ "Race - no. (%)",
+      OPO ~ "Organ Procurement Organization - no. (%)",
+      Cause_of_Death_UNOS ~ "UNOS defined cause of death - no. (%)",
+      Mechanism_of_Death ~ "UNOS defined mechanism of death - no. (%)",
+      Circumstances_of_Death ~ "UNOS defined circumstances of death - no. (%)"
+    )
+  ) %>%
+  gtsummary::modify_header(gtsummary::all_stat_cols() ~ "**Overall**\n(N = {N})") %>%
+  gtsummary::bold_labels() %>%
+  gtsummary::modify_footnote(update = dplyr::everything() ~ NA)
+
+obj1_abt_full <-
+  gtsummary::tbl_merge(list(obj1_abt_col, obj1_abt_row)) %>%
+  gtsummary::modify_caption("Organ Procurement vs. Outcomes") %>%
+  gtsummary::modify_spanning_header(dplyr::everything() ~ NA)
+
+obj1_abt_full %>%
+  gtsummary::as_kable_extra(
+    format = "latex",
+    booktabs = TRUE,
+    longtable = TRUE,
+    linesep = ""
+  ) %>%
+  kableExtra::kable_styling(
+    position = "left",
+    latex_options = c("striped", "repeat_header", "scale_down"),
+    stripe_color = "gray!15"
+  ) %>%
+  kableExtra::column_spec(1, width = "12.5em")
+```
+
+Table \@ref(tab:descriptives) summarizes the baseline characteristics of the study cohort (N = 132,968), stratified by 
+whether an organ was successfully procured. Among all decedents, 9,502 (7.1%) had at least one organ procured, while 
+123,466 (92.9%) did not.
+
+**Age** was strongly associated with organ procurement. The median age among those whose organs were not procured was 59 
+years (IQR: 50–72), compared to 40 years (IQR: 28–54) among those who underwent procurement. Stratified age group analysis 
+revealed that younger patients had higher procurement rates; for instance, decedents aged 20–29 had a procurement rate of 
+25%, compared to only 16% among those under 18. Procurement likelihood declined progressively with increasing age, 
+suggesting a potential age-related disparity that may reflect clinical ineligibility, comorbidity burden, or differences 
+in referral or donor evaluation practices.
+
+**Gender** differences in procurement were modest. Males comprised 59% of the cohort and had a procurement rate of 7.5%, 
+compared to 6.7% among females. Although the absolute difference was small, this slight imbalance may stem from anatomical 
+compatibility, clinical profiles, or unmeasured systemic factors. However, without adjustment for clinical variables, it 
+is unclear whether this difference reflects a true disparity or confounding.
+
+**Race and ethnicity** exhibited more pronounced disparities. White/Caucasian decedents accounted for 60% of the cohort, 
+with a procurement rate of 7.3%. In contrast, Black/African American decedents (19% of the cohort) had a lower procurement 
+rate of 6.1%, while Hispanic decedents (16%) had a notably higher rate of 8.5%. The lower procurement among Black patients 
+may reflect structural inequities in referral, consent, or evaluation processes. Conversely, the relatively high procurement 
+among Hispanic decedents may be influenced by geographic or demographic differences in donor identification and suitability. 
+These trends highlight the importance of adjusting for clinical and regional context in disparity analyses.
+
+**Organ Procurement Organization (OPO)** performance varied substantially across regions. Procurement rates ranged from 
+5.3% in OPO3 to 10.2% in OPO5. While differences in case mix may explain some variation, the consistently higher yield in 
+OPO5 suggests operational or procedural differences in donor management and recovery efficiency. Conversely, lower rates 
+in OPOs 2, 3, and 6 may reflect logistical challenges, under-referral, or systemic inefficiencies. These inter-regional 
+disparities underscore the need for standardized performance evaluation and the potential for best-practice dissemination 
+from higher-performing OPOs.
+
+**UNOS-defined cause of death** was available for 103,207 decedents. Head trauma and cerebrovascular/stroke-related 
+deaths had the highest procurement rates (24% and 26%, respectively), likely reflecting favorable clinical conditions 
+for donation. The most common cause of death—anoxia—had a moderate procurement rate of 9.6%. In contrast, terminal or 
+infectious conditions such as cancer, COPD, HIV, sepsis, and viral disease were associated with near-zero procurement, 
+consistent with contraindications for donation. Notably, no organs were procured from the 29,761 decedents with unknown 
+cause of death, suggesting documentation-related loss of donor opportunities.
+
+**UNOS-defined mechanism of death** showed similar trends. Among the 98,468 patients with available data, traumatic 
+causes—such as gunshot wounds (32–49%), asphyxiation (30%), and drug intoxication (24–52%)—were associated with the 
+highest procurement rates. Other external causes like blunt trauma, drowning, and electrocution also had elevated rates. 
+In contrast, natural causes, including cardiovascular and unspecified natural deaths, had rates below 6%. These findings 
+reinforce the observation that donation is more likely in settings of sudden trauma, where organ viability can be 
+maintained. The complete absence of procurement in the 34,500 cases with missing mechanism data again raises concern 
+about under-documented opportunities.
+
+**UNOS-defined circumstances of death** further highlight these patterns. Among decedents with known data (N = 98,524), 
+natural causes accounted for the majority (62%) but had the lowest procurement rate (4.9%). Conversely, deaths from 
+external circumstances such as suicide (32%), homicide (27%), and non-motor vehicle accidents (54%) showed substantially 
+higher procurement rates. Rare categories such as alleged suicide and alleged child abuse—though small in number—had 
+procurement rates exceeding 50%, likely due to younger age and minimal comorbidities. The 34,444 decedents with missing 
+data again had no recorded procurement, highlighting the need for consistent classification of death circumstances to
+ optimize donor recognition.
+
+```{r gg-procured-by-obj1, fig.cap = "Proportion of organ procurement by Race, Gender, Age Category, and OPO. Bars show within-group percentages; procurement is more common among younger, male, Hispanic, and OPO5 patients."}
+p_gender <-
+  ggplot2::ggplot(obj1_abt, ggplot2::aes(x = Gender, fill = procured)) +
+  ggplot2::geom_bar(position = "fill") +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::scale_fill_manual(
+    values = c("FALSE" = "#D3D3D3", "TRUE" = "#4682B4"),
+    name = "Procured",
+    labels = c("No", "Yes")
+  ) +
+  ggplot2::labs(title = "By Gender", y = "Percent", x = NULL) +
+  ggplot2::theme_minimal()
+
+p_race <-
+  ggplot2::ggplot(obj1_abt, ggplot2::aes(x = Race, fill = procured)) +
+  ggplot2::geom_bar(position = "fill") +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::scale_fill_manual(
+    values = c("FALSE" = "#D3D3D3", "TRUE" = "#4682B4"),
+    name = "Procured",
+    labels = c("No", "Yes")
+  ) +
+  ggplot2::labs(title = "By Race", y = "Percent", x = NULL) +
+  ggplot2::coord_flip() +
+  ggplot2::theme_minimal()
+
+p_age <-
+  ggplot2::ggplot(obj1_abt, ggplot2::aes(x = age_category, fill = procured)) +
+  ggplot2::geom_bar(position = "fill") +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::scale_fill_manual(
+    values = c("FALSE" = "#D3D3D3", "TRUE" = "#4682B4"),
+    name = "Procured",
+    labels = c("No", "Yes")
+  ) +
+  ggplot2::labs(title = "By Age Category", y = "Percent", x = NULL) +
+  ggplot2::coord_flip() +
+  ggplot2::theme_minimal()
+
+p_opo <-
+  ggplot2::ggplot(obj1_abt, ggplot2::aes(x = OPO, fill = procured)) +
+  ggplot2::geom_bar(position = "fill") +
+  ggplot2::scale_y_continuous(labels = scales::percent) +
+  ggplot2::scale_fill_manual(
+    values = c("FALSE" = "#D3D3D3", "TRUE" = "#4682B4"),
+    name = "Procured",
+    labels = c("No", "Yes")
+  ) +
+  ggplot2::labs(title = "By OPO", y = "Percent", x = NULL) +
+  ggplot2::theme_minimal()
+
+library(patchwork)
+
+procured_by_obj1 <-
+  (p_race | p_gender) /
+  (p_age | p_opo) +
+  patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "bottom")
+
+procured_by_obj1
+```
+
+Figure \@ref(fig:gg-procured-by-obj1) summarizes disparities in organ procurement rates across key demographic and 
+regional groups. Notable patterns include higher procurement rates among younger individuals, males, Hispanic patients, 
+and those referred within OPO5. These descriptive trends motivated subsequent hypothesis testing and regression analysis.
+
+### Hypothesis testing
+
+We hypothesize **whether organ procurement is associated with specific demographic, geographic, or clinical characteristics.**
+
+More specifically, we are tesing the following:
+
+- H_{0} (null): There is no difference in organ procurement rates across the levels of the variable.
+- H_{1} (alternative): There is a difference in organ procurement rates across the levels of the variable.
+
+While my initial hypothesis testing plan included both demographic and clinical variables, I am excluding `Cause_of_Death_UNOS`, 
+`Mechanism_of_Death`, and `Circumstances_of_Death` due to evidence of documentation bias. These variables are 
+disproportionately complete among patients whose organs were procured, but often missing or marked as "unknown" for 
+those who were not. Because this documentation typically occurs during or after donor evaluation, the completeness of 
+these fields may be contingent on the procurement process itself. As a result, statistical associations involving these 
+variables may reflect process-related bias rather than true underlying clinical differences.
+
+I also excluded `age_category`, as it is a derived variable from `Age`, which was already included in the analysis 
+using a Welch two-sample t-test. Including both would introduce redundancy and increase the risk of multiple comparisons 
+without providing additional insight.
+
+My final hypothesis testing focused on variables that are consistently recorded and not conditional on procurement 
+activity: `Race`, `Gender`, `OPO`, and continuous `Age`.
+
+```{r hypothesis_testing_2, echo=FALSE}
+categorical_vars <- c("Race", "Gender", "OPO")
+
+chi_sq_results <-
+  categorical_vars %>%
+  stats::setNames(nm = .) %>%
+  purrr::map_df(~ {
+    tbl <- table(obj1_abt$procured, obj1_abt[[.x]])
+    broom::tidy(chisq.test(tbl)) %>%
+      dplyr::mutate(variable = .x)
+  })
+
+age_test <- 
+  broom::tidy(t.test(Age ~ procured, data = obj1_abt)) %>%
+  dplyr::mutate(variable = "Age")
+
+final_results <- 
+  dplyr::bind_rows(chi_sq_results, age_test) %>%
+  dplyr::select(variable, method, statistic, p.value)
+
+final_results
+```
+
+All variables tested showed statistically significant differences in procurement rates:
+
+* **Race** was significantly associated with procurement status (*x^{2}* = 126, *p* < 0.001), suggesting that procurement 
+rates vary across racial and ethnic groups.
+* **Gender** also showed a significant difference (*x^{2}* = 29.7, *p* < 0.001), although the magnitude of the association 
+was smaller.
+* **Organ Procurement Organization (OPO)** region was strongly associated with procurement likelihood (*x^{2}* = 516, 
+*p* < 0.001), indicating considerable variation in outcomes across geographic regions.
+* **Age**, treated as a continuous variable, was significantly different between procured and non-procured groups 
+(Welch *t* = 103, *p* < 0.001), with younger patients more likely to have organs procured.
+
+These results support the presence of disparities in procurement outcomes related to race, gender, region, and age, 
+motivating further multivariable modeling to quantify these differences while adjusting for potential confounding.
+
+### Logistic Regression
+
+```{r log_regression_obj1}
+log_reg_model <-
+  stats::glm(procured ~ Race + Gender + OPO, data = obj1_abt, family = binomial)
+
+summary(log_reg_model)
+```
+
+```{r or_obj1, echo=FALSE}
+log_reg_results <- broom::tidy(log_reg_model, exponentiate = TRUE, conf.int = TRUE)
+log_reg_results %>% knitr::kable()
+```
+
+```{r ors_from_log_reg_model, fig.cap = "Odds Ratios from Logistic Regression Model"}
+log_reg_results %>%
+  dplyr::filter(term != "(Intercept)") %>%
+  dplyr::mutate(
+    term = gsub("Race", "Race: ", term),
+    term = gsub("Gender", "Gender: ", term),
+    term = gsub("OPO", "OPO: ", term),
+    term = factor(term, levels = rev(term))
+  ) %>%
+  ggplot2::ggplot(ggplot2::aes(x = term, y = estimate)) +
+  ggplot2::geom_point(size = 3, color = "steelblue") +
+  ggplot2::geom_errorbar(
+    ggplot2::aes(ymin = conf.low, ymax = conf.high),
+    width = 0.1,
+    color = "steelblue"
+  ) +
+  ggplot2::geom_hline(yintercept = 1,
+                      linetype = "dashed",
+                      color = "red") +
+  ggplot2::coord_flip() +
+  ggplot2::labs(x = NULL,
+                y = "Odds Ratio (95% CI)") +
+  ggplot2::theme_minimal(base_size = 12)
+```
+
+The figure (\@ref(fig:ors_from_log_reg_model)) displays the adjusted odds ratios (ORs) and 95% confidence intervals from 
+the logistic regression model evaluating associations between demographic/geographic characteristics and the likelihood of organ procurement.
+
+After controlling for all covariates in the model:
+
+* **Race**: Compared to Black patients (reference group), Hispanic patients had **higher odds** of organ procurement 
+(OR is approx. 1.35), while patients categorized as Other/Unknown had **lower odds** (OR is approx. 0.87). White/Caucasian 
+patients also had significantly higher odds (OR is approx. 1.17), suggesting potential racial disparities in procurement 
+outcomes even after adjustment.
+* **Gender**: Male patients had **higher odds** of procurement compared to females (OR is approx. 1.12), consistent with 
+patterns observed in the unadjusted analysis.
+* **OPO Region**: Substantial geographic variation was observed. Compared to OPO1 (reference), patients in OPO5 had the 
+**highest odds** of procurement (OR is approx. 1.27), while those in OPO2, OPO3, and OPO6 had **significantly lower odds** 
+(ORs ranging from 0.62 to 0.67). These differences may reflect regional variation in practices, infrastructure, or consent processes.
+
+All associations were statistically significant (p < 0.05), and none of the confidence intervals included the null value 
+(OR = 1.0). This indicates meaningful adjusted differences in organ procurement across race, gender, and OPO.
+
+Specifically, Hispanic patients, White patients, male patients, and those in OPO5 had significantly higher odds of organ 
+procurement compared to their respective reference groups. In contrast, patients in OPOs 2, 3, 4, and 6 had significantly 
+lower odds.
+
+```{r clean_up, include=FALSE}
+obj1_abt_full %>%
+  as.data.frame() %>%
+  xlsx::write.xlsx(here::here("data", "Objective-1.xlsx"))
+
+rm(list = ls(all.names = TRUE)) # clear all objects including hidden objects
+invisible(gc()) # free up memory
+```
