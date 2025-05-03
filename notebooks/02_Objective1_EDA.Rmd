@@ -1,5 +1,5 @@
 ---
-title: 'Objective 1: EDA'
+title: 'Disparities in Organ Procurement Outcomes'
 author: "Benzon Carlitos Salazar (salazarbc24@uww.edu)"
 date: "`r Sys.Date()`"
 output:

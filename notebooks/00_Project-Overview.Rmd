@@ -5,17 +5,15 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-This project focuses on three interrelated themes in organ transplantation: disparities in organ procurement, clinical 
-predictors of organ viability, and predictive modeling of procurement success. The analysis will draw on the 
-**Organ Retrieval and Collection of Health Information for Donation (ORCHID) dataset**, a publicly available resource 
-from PhysioNet comprising over **133,101 deceased donor referrals** across six **Organ Procurement Organizations (OPOs)** 
-in the United States.
+This project focuses on two interrelated themes in organ transplantation: disparities in organ procurement, clinical 
+predictors of organ viability. The analysis will draw on the **Organ Retrieval and Collection of Health Information for Donation (ORCHID) dataset**, 
+a publicly available resource from PhysioNet comprising over **133,101 deceased donor referrals** across six 
+**Organ Procurement Organizations (OPOs)** in the United States.
 
-Specifically, the project will address the following questions:
+Specifically, I will attempt to address the following questions:
 
 1. **Disparities in Organ Procurement Outcomes** – To what extent do race, socioeconomic status, and geography influence procurement rates?  
 2. **Clinical Predictors of Procurement Success** – Which medical and laboratory parameters are most strongly associated with successful organ procurement?  
-3. **Predictive Modeling for Procurement Success** – Can statistical regression models be developed to accurately predict whether an organ will be successfully procured?
 
 These questions are critical to improving the equity and efficiency of the organ transplantation system. By identifying 
 disparities and enhancing predictive capabilities, this work aims to support more informed and equitable decision-making 
@@ -30,13 +28,12 @@ hosted on **PhysioNet**. The data collection process will involve the following 
 
 1. **Data Acquisition:**
   - The dataset will be downloaded directly from PhysioNet using their web interface.
-  - If necessary, the PhysioNet API will be used for automated access.
 2. **Data Structure and Organization:**
   - The dataset consists of multiple CSV files, including **demographic, clinical, and procedural data** related to organ procurement.
   - The tables will be linked using the unique **PatientID** field.
 3. **Data Storage and Management:**
   - The dataset will be stored in a **secure local repository** or **cloud storage** for easy access.
-  - R will be used for initial data exploration and preprocessing.
+  - R will be used for the data exploration, preprocessing, and analysis.
 4. **Data Cleaning and Preprocessing:**
   - Handling missing values by applying imputation or exclusion methods where appropriate.
   - Standardizing variable formats for consistency in analysis.
@@ -56,16 +53,3 @@ the dataset includes:
 - **Outcome Variable**: Whether the organ was successfully procured.
 
 This dataset can be obtained from PhysioNet: https://physionet.org/content/orchid/2.0.0/
-
-## Questions and Concerns
-
-### Questions
-
-1. What are the best statistical methods to adjust for confounding factors in organ procurement disparities?
-2. How can missing data in clinical variables be handled to improve regression model accuracy?
-3. What are the most effective regression techniques for predicting organ procurement success?
-
-### Concerns
-
-- **Class Imbalance**: Procurement success may be significantly rarer than failures, which could affect model validity.
-- **Data Bias**: Referral processes and OPO performance may introduce biases into the dataset.

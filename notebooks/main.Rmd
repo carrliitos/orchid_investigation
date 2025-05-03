@@ -17,8 +17,6 @@ output:
 ---
 
 \newpage
-\tableofcontents
-\newpage
 
 ```{r setup, include=FALSE}
 options(knitr.kable.NA = "")
@@ -42,6 +40,8 @@ is influenced by a complex interplay of medical, logistical, and systemic factor
 equity and efficiency in organ donation, disparities persist across racial, socioeconomic, and geographic lines, raising 
 concerns about fairness and resource allocation.
 
+My full code for this project can be found here: https://github.com/carrliitos/orchid_investigation
+
 ```{r child ="00_Project-Overview.Rmd"}
 ```
 
@@ -52,10 +52,62 @@ concerns about fairness and resource allocation.
 ```{r child ="01_Data-Extraction.Rmd"}
 ```
 
-# Analysis
+# Analysis and Results
 
 ```{r child ="02_Objective1_EDA.Rmd"}
 ```
+
+```{r child ="03_Objective2.Rmd"}
+```
+
+# Conclusions
+
+This analysis of over 130,000 decedents from the ORCHID dataset reveals clear and statistically significant disparities 
+in organ procurement across racial, gender, age, and geographic lines. Younger age, male sex, and residence within certain 
+Organ Procurement Organizations (notably OPO5) were all associated with higher odds of organ procurement. After adjusting 
+for covariates, both Hispanic and White decedents had significantly greater odds of organ procurement compared to Black 
+decedents, indicating persistent racial inequities even when controlling for observable clinical and demographic factors.
+
+Geographic disparities were also pronounced, with some OPO regions demonstrating procurement rates nearly double those of 
+others, suggesting variation in operational efficiency, consent practices, or systemic access. Importantly, fields such as 
+cause, mechanism, and circumstances of death were often incomplete for non-procured cases, raising the possibility of 
+documentation bias and reinforcing the need for standardization and completeness in clinical reporting.
+
+These findings underscore the urgent need for policy-level interventions aimed at standardizing referral practices, 
+improving donor identification workflows, and addressing structural barriers to equitable organ donation. I believe that 
+future work should focus on disentangling institutional, clinical, and societal drivers of these disparities and 
+evaluating targeted interventions across under-performing regions and demographic groups.
+
+# Discussion
+
+The results of my project have important implications for the donor-eligible population represented in the ORCHID dataset. 
+The observed disparities in organ procurement rates, especially by race, age, gender, and geographic region (proxied by OPO), 
+highlight structural and systemic inequities that may limit access to life-saving transplant opportunities. For example, 
+the significantly lower procurement rates among Black decedents, even after adjusting for demographic and geographic factors, 
+suggest the influence of unmeasured social, institutional, or consent-related barriers. Likewise, substantial variation 
+in procurement performance across OPO regions indicates a lack of consistency in donor identification and recovery practices,
+with some regions demonstrating markedly lower efficiency or success rates.
+
+If I were to repeat my study, several improvements could enhance its robustness and validity. First, more comprehensive 
+adjustment for clinical variables, such as comorbidities, hemodynamic stability, or documented contraindications to 
+procurement, would allow for a more nuanced understanding of whether disparities are clinically justified or reflect 
+systemic bias. Second, future analyses would benefit from linkage to hospital- and OPO-level operational data, which 
+could show some light on institutional differences in referral timing, staffing, consent protocols, and donor management 
+practices. Additionally, integrating qualitative or sociocultural data, such as language preference or next-of-kin 
+refusal rates, may help contextualize demographic disparities.
+
+Several potential biases may affect these findings. The most prominent is **documentation bias**—key variables such as 
+cause, mechanism, and circumstances of death were often missing or marked as "unknown" in non-procured cases. This likely 
+reflects a post-referral or post-evaluation data entry process, where full clinical documentation is completed only after 
+a patient is deemed a viable donor (i.e., the donor has passed away). Consequently, analyses that include these fields may 
+suffer from **informative missingness**, where the absence of data is correlated with the outcome itself. In addition, 
+there may be **selection bias** if referral practices differ systematically across hospitals, regions, or patient 
+populations, potentially underrepresenting certain groups in the donor evaluation process.
+
+In summary, while the findings point to real and actionable disparities in organ procurement, they must be interpreted 
+in the context of the limitations presented above. Future study on the ORCHID dataset should aim to improve data completeness, 
+incorporate richer clinical context, and examine upstream processes, such as referral timing and evaluation criteria, to 
+more precisely target opportunities for reform.
 
 \newpage
 # Appendix

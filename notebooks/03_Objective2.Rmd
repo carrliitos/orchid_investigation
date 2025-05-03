@@ -1,0 +1,185 @@
+---
+title: "Clinical Predictors of Procurement Success"
+author: "Benzon Carlitos Salazar (salazarbc24@uww.edu)"
+date: "`r Sys.Date()`"
+output:
+  bookdown::pdf_document2:
+    number_sections: true
+    fig_caption: true
+---
+
+```{r setup, include=FALSE}
+library(magrittr)
+
+referrals_df <- nanoparquet::read_parquet(here::here("data", "referrals.parquet"))
+
+abg_events_df <- 
+  nanoparquet::read_parquet(here::here("data", "abg_events.parquet")) %>%
+  dplyr::group_by(PatientID) %>%
+  dplyr::arrange(desc(time_event), .by_group = TRUE) %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-c(opo_group, time_event)) %>%
+  dplyr::inner_join(referrals_df %>% dplyr::select(PatientID), by = "PatientID") %>%
+  dplyr::distinct()
+cbc_events_df <- 
+  nanoparquet::read_parquet(here::here("data", "cbc_events.parquet")) %>%
+  dplyr::group_by(PatientID) %>%
+  dplyr::arrange(desc(time_event), .by_group = TRUE) %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-c(opo_group, time_event)) %>%
+  dplyr::inner_join(referrals_df %>% dplyr::select(PatientID), by = "PatientID") %>%
+  dplyr::distinct()
+chemisty_events_df <-
+  nanoparquet::read_parquet(here::here("data", "chem_events.parquet")) %>%
+  dplyr::group_by(PatientID) %>%
+  dplyr::arrange(desc(time_event), .by_group = TRUE) %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-c(opo_group, time_event)) %>%
+  dplyr::inner_join(referrals_df %>% dplyr::select(PatientID), by = "PatientID") %>%
+  dplyr::distinct() %>%
+  dplyr::rename("Sodium" = "NA")
+hemo_events_df <-
+  nanoparquet::read_parquet(here::here("data", "hemo_events.parquet")) %>%
+  dplyr::group_by(PatientID) %>%
+  dplyr::arrange(desc(time_event_start), .by_group = TRUE) %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-c(opo_group, time_event_start, time_event_end)) %>%
+  dplyr::inner_join(referrals_df %>% dplyr::select(PatientID), by = "PatientID") %>%
+  dplyr::distinct()
+fluid_balance_events_df <-
+  nanoparquet::read_parquet(here::here("data", "fluid_balance_events.parquet")) %>%
+  dplyr::group_by(PatientID) %>%
+  dplyr::arrange(desc(time_event_start), .by_group = TRUE) %>%
+  dplyr::slice_head() %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-c(opo_group, time_event_start, time_event_end)) %>%
+  dplyr::inner_join(referrals_df %>% dplyr::select(PatientID), by = "PatientID") %>%
+  dplyr::distinct()
+
+all_labs_df <-
+  referrals_df %>%
+  dplyr::select(PatientID, procured, OPO) %>%
+  dplyr::mutate(procured = factor(ifelse(procured == TRUE, 1, 0))) %>%
+  dplyr::inner_join(abg_events_df, by = "PatientID") %>%
+  dplyr::inner_join(cbc_events_df, by = "PatientID") %>%
+  dplyr::inner_join(chemisty_events_df, by = "PatientID") %>%
+  dplyr::inner_join(fluid_balance_events_df, by = "PatientID") %>%
+  dplyr::inner_join(hemo_events_df, by = "PatientID") %>%
+  dplyr::select(-value_modifier)
+```
+
+## Objective 2: Evaluating the Influence of Clinical Variables on Procurement Success
+
+#### Goal
+
+To evaluate whether specific medical and laboratory parameters, such as blood gas values, chemistry panels, complete 
+blood counts, and hemodynamic indicators, are associated with successful organ procurement, and to quantify the strength 
+and direction of these associations using univariate logistic regression models.
+
+For this analysis, the following datasets are used:
+
+- Arterial blood gas measurements
+- Complete blood count lab events
+- Chemistry lab test results 
+- Fluid input/output documentation 
+- Hemodynamic monitoring values
+
+For each measurement, we take the patient's **latest** value. And then all latest labs information are joined together to 
+create a one `all_labs_info` dataframe.
+
+**Outcome**
+
+- `procured` (binary): 1 = organ procured, 0 = not procured.
+
+Since not all patients had every laboratory test completed, the dataset size decreased substantially after joining all lab 
+datasets: from an initial 133,101 patients to 10,843 patients with at least one lab result recorded. Importantly, some 
+patients may have only partially completed a given panel, for instance, a patient might have a White Blood Cell (WBC) count 
+but lack values for Red Blood Cell (RBC) count or Hemoglobin (Hgb). Such patients are still retained in the 
+`all_labs_info` dataframe, provided they have any available lab values.
+
+This approach allows us to maximize sample size while preserving partial clinical information, ensuring that we do not 
+exclude potentially informative cases due to isolated missingness.
+
+Since there are still a lot of missing values, however, further processing is required to run the logistic regression model.
+I will further filter out variables with more than 50% missingness:
+
+```{r missing_work, echo=FALSE}
+missing_summary <- 
+  all_labs_df %>%
+  dplyr::summarise(dplyr::across(dplyr::everything(), ~mean(is.na(.)))) %>%
+  tidyr::pivot_longer(everything(), names_to = "variable", values_to = "missing_pct")
+
+keep_vars <- 
+  missing_summary %>%
+  dplyr::filter(missing_pct < 0.5) %>%
+  dplyr::pull(variable)
+
+final_df <- 
+  all_labs_df %>%
+  dplyr::select(all_of(keep_vars)) %>%
+  dplyr::select(-c(PatientID, fluid_type)) %>%
+  dplyr::mutate(across(where(is.character), as.factor)) %>%
+  dplyr::select(dplyr::where(~ dplyr::n_distinct(.) > 1)) %>%
+  dplyr::filter(complete.cases(.))
+```
+
+After this, we are now at 10,843 observations with 44 usable variables. Additionally, due to the massive imbalance of the 
+`fluid_type`, I also had to remove that column, which leaves us with 43 variables.
+
+**Statistical Modeling Approach**:
+
+To identify clinical laboratory variables associated with successful organ procurement, we use a **manual backward stepwise logistic regression** 
+approach. We begin with a full model that includes all available lab-based predictors from each patient's most recent 
+arterial blood gas (ABG), complete blood count (CBC), chemistry, hemodynamic, and fluid balance data.
+
+At each step, we remove the variable that contributes the least to the model, typically the one with the highest p-value 
+or smallest effect size. After each removal, we refit the model and compare it to the previous version using 
+**likelihood ratio tests (ANOVA)** or changes in the **Akaike Information Criterion (AIC)**. We continue this process 
+until all remaining variables are either statistically significant or clinically relevant.
+
+This approach yields a more parsimonious model, reduces overfitting, and helps isolate the strongest clinical predictors 
+of procurement success.
+
+### Multivariable Logistic Regression Identifying Clinical Predictors of Procurement
+
+```{r fit-log-reg-backwards, include=FALSE, message=FALSE, warning=FALSE}
+full_model <- stats::glm(procured ~ ., data = final_df, family = binomial)
+step_model <- step(full_model, direction = "backward", trace = TRUE)
+step_model_summary <- broom::tidy(step_model, exponentiate = TRUE, conf.int = TRUE)
+```
+
+```{r log-reg-backwards, echo=FALSE}
+knitr::kable(step_model_summary, digits = 3,
+             caption = "Final Logistic Regression Model: Clinical Predictors of Procurement Success (Odds Ratios)")
+```
+
+To evaluate the association between clinical variables and the likelihood of organ procurement, I performed a multivariable 
+logistic regression with backward stepwise elimination. The final model retained significant predictors after adjusting 
+for potential collinearity and missingness.
+
+Table \@ref(tab:log-reg-backwards) shows that several variables were independently associated with increased odds of procurement. 
+These included higher **arterial pH** (*OR* = 13.1, 95% CI: 1.75–98.0, *p* = 0.012), **white blood cell count** (*OR* = 1.05 
+per unit increase, 95% CI: 1.02–1.09, *p* < 0.001), **hemoglobin** (*OR* = 1.45, 95% CI: 1.04–2.05, *p* = 0.033), **sodium** 
+(*OR* = 1.04, 95% CI: 1.03–1.07, *p* < 0.001), **albumin** (*OR* = 1.44, 95% CI: 1.11–1.88, *p* = 0.007), and **magnesium** 
+(*OR* = 1.58, 95% CI: 1.09–2.34, *p* = 0.020).
+
+In contrast, higher values of **hematocrit** (*OR* = 0.85, 95% CI: 0.76–0.94, *p* = 0.004), **platelet count** (*OR* = 0.99 
+per unit increase, 95% CI: 0.993–0.997, *p* < 0.001), **potassium** (*OR* = 0.74, 95% CI: 0.58–0.96, *p* = 0.021), and 
+**serum creatinine** (*OR* = 0.90, 95% CI: 0.84–0.96, *p* = 0.002) were negatively associated with procurement.
+
+Ventilator mode was also significant: compared to the reference group, **pressure-controlled ventilation (PC)** was associated 
+with increased odds (*OR* = 1.49, 95% CI: 1.01–2.24, *p* = 0.049), whereas **CPAP mode** was associated with decreased odds 
+(*OR* = 0.12, 95% CI: 0.012–0.82, *p* = 0.042). Procurement likelihood varied significantly by OPO, with **OPO2** exhibiting 
+a markedly higher odds of procurement (*OR* = 2.88, 95% CI: 1.91–4.44, *p* < 0.001) relative to the reference group.
+
+These findings suggest that a combination of metabolic, hematologic, and respiratory parameters, as well as operational 
+region, play important roles in procurement success.
+
+```{r clean_up, include=FALSE}
+rm(list = ls(all.names = TRUE)) # clear all objects including hidden objects
+invisible(gc()) # free up memory
+```
